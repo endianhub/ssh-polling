@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+	<!-- 1、配置数据源 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="url" value="${db.master.url}"></property>
+		<property name="username" value="${db.master.user}"></property>
+		<property name="password" value="${db.master.password}"></property>
+
+		<!-- 配置初始化大小、最小、最大 -->
+		<property name="initialSize" value="${db.master.initialSize}" />
+		<property name="minIdle" value="${db.master.minIdle}" />
+		<property name="maxActive" value="${db.master.maxActive}" />
+
+		<!-- 配置获取连接等待超时的时间 -->
+		<property name="maxWait" value="${db.master.maxWait}" />
+
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${db.master.timeBetweenEvictionRunsMillis}" />
+
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${db.master.minEvictableIdleTimeMillis}" />
+
+		<property name="validationQuery" value="${db.master.validationQuery}" />
+		<property name="testOnBorrow" value="${db.master.testOnBorrow}" />
+		<property name="testOnReturn" value="${db.master.testOnReturn}" />
+		<property name="testWhileIdle" value="${db.master.testWhileIdle}" />
+		<property name="removeAbandoned" value="${db.master.removeAbandoned}" />
+		<property name="removeAbandonedTimeout" value="${db.master.removeAbandonedTimeout}" />
+		<property name="logAbandoned" value="${db.master.logAbandoned}" />
+
+		<!-- 配置监控统计拦截的filters -->
+		<!-- <property name="filters" value="mergeStat,wall,log4j2" /> -->
+	</bean>
+
+	<!-- 2、配置session工厂 -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop><!--指定数据库方言 -->
+				<!-- 显示和格式化 -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+			</props>
+		</property>
+		<!-- 配置Hibernate映射文件 -->
+		<!-- <property name="mappingDirectoryLocations"> <list> <value>classpath:com/xh/web/log/model</value> </list> </property> -->
+
+		<property name="packagesToScan" value="com.xh.ssh.polling.model" />
+
+	</bean>
+
+	<!-- 3、定义事务管理器 -->
+	<bean name="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<!--4、事务管理 属性 -->
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="insert*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="delete*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="update*" propagation="REQUIRED" rollback-for="Exception" />
+			<tx:method name="*" propagation="REQUIRED" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- 5、配置切面 -->
+	<aop:config expose-proxy="true" proxy-target-class="true">
+		<aop:advisor advice-ref="transactionAdvice" pointcut="execution(* com.xh.ssh.polling.service..*.*(..))" />
+	</aop:config>
+
+</beans>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<context:property-placeholder location="classpath:config/db.properties" />
+
+	<!-- aspectj aop启用CGliB代理 -->
+	<aop:aspectj-autoproxy expose-proxy="true" proxy-target-class="true" />
+	<context:annotation-config />
+
+	<!-- 开启扫描注解 -->
+	<context:component-scan base-package="com.xh.ssh.polling" />
+
+	<bean id="pollingTask" class="com.xh.ssh.polling.service.polling.PollingTask"></bean>
+	<bean id="exampleJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<!-- 指定任务类 -->
+		<property name="targetObject" ref="pollingTask" />
+		<!-- 指定任务执行的方法 -->
+		<property name="targetMethod" value="execute" />
+	</bean>
+	<bean id="exampleJobTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail" ref="exampleJobDetail" />
+		<!-- 每10秒运行一次 -->
+		<property name="cronExpression" value="0/3 * * * * ?" />
+	</bean>
+
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<!-- <ref bean="exampleJobTrigger" /> -->
+				<ref bean="exampleJobTrigger" />
+			</list>
+		</property>
+	</bean>
+
+	<import resource="classpath:spring/spring-hibernate.xml" />
+</beans>
