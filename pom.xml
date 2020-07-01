@@ -24,7 +24,7 @@
 		<log4j2.version>2.11.1</log4j2.version>
 
 		<servlet.version>4.0.1</servlet.version>
-		<quartz.version>2.3.1</quartz.version>
+		<quartz.version>2.3.2</quartz.version>
 	</properties>
 
 	<dependencies>
